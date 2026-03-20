@@ -4,7 +4,6 @@
 [![Deploy to Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-blue?logo=github)](https://pallavikailas.github.io/sorting-visualizer)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](#)
 [![Lighthouse](https://img.shields.io/badge/lighthouse-90%2B-orange?logo=lighthouse)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An interactive, step-by-step sorting algorithm visualizer. Watch algorithms work in real time, compare time complexities, and explore Big-O growth curves — all in the browser with zero dependencies.
 
