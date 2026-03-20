@@ -43,11 +43,8 @@ sorting-visualizer/
 ├── .github/
 │   └── workflows/
 │       ├── ci-cd.yml           # Main CI/CD pipeline
-│       └── pr-checks.yml       # Pull request validation
 ├── lighthouserc.js             # Lighthouse CI thresholds
-├── eslint.config.js            # JavaScript linting
-├── .stylelintrc.json           # CSS linting
-└── .htmlhintrc                 # HTML linting
+├── package.json          
 ```
 
 ---
@@ -82,14 +79,6 @@ Push / PR
             🔥 Smoke test: verifies live URL returns 200
 ```
 
-### Pipeline Status per Branch
-
-| Branch    | Lint | Test | Build | Deploy |
-|-----------|------|------|-------|--------|
-| `main`    | ✅   | ✅   | ✅    | ✅ Auto-deploy |
-| `develop` | ✅   | ✅   | ✅    | ❌ Manual only |
-| PR        | ✅   | ✅   | ✅    | ❌ Review first |
-
 ---
 
 ## 🚀 Getting Started
@@ -101,7 +90,7 @@ Push / PR
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/sorting-visualizer.git
+git clone https://github.com/pallavikailas/sorting-visualizer.git
 cd sorting-visualizer
 
 # Install dev dependencies
