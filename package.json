@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx live-server --port=3000 --open=/ --watch=src",
     "build": "node scripts/build.js",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test": "jest --coverage",
     "lint:html": "npx htmlhint index.html --config .htmlhintrc",
     "lint:css": "npx stylelint 'src/**/*.css'",
     "lint:js": "npx eslint 'src/**/*.js' 'tests/**/*.js'",
