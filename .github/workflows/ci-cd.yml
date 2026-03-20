@@ -1,12 +1,3 @@
-# ============================================================
-# SortViz — CI/CD Pipeline
-# 1. Lint & Validate
-# 2. Algorithm Tests (Jest)
-# 3. Build & Bundle
-# 4. Deploy to GitHub Pages
-# 5. Lighthouse Audit (post-deploy)
-# ============================================================
-
 name: CI/CD Pipeline
 
 on:
@@ -109,32 +100,38 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli
-      - name: Wait for deployment to settle
-        run: sleep 15
-      - name: Run Lighthouse audit
+      - name: Install Lighthouse
+        run: npm install -g lighthouse chrome-launcher
+      - name: Run Lighthouse
         run: |
-          lhci autorun \
-            --collect.url=https://pallavikailas.github.io/sorting-visualizer/ \
-            --collect.numberOfRuns=1 \
-            --assert.preset=lighthouse:no-pwa \
-            --assert.assertions.categories:performance=warn \
-            --assert.assertions.categories:accessibility=warn \
-            --assert.assertions.categories:best-practices=warn \
-            --assert.assertions.categories:seo=warn \
-            --upload.target=filesystem \
-            || true
+          lighthouse https://pallavikailas.github.io/sorting-visualizer/ \
+            --chrome-flags="--headless --no-sandbox --disable-gpu" \
+            --output=json \
+            --output=html \
+            --output-path=./lighthouse-report \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --quiet
         continue-on-error: true
+      - name: Print scores
+        if: always()
+        run: |
+          if [ -f ./lighthouse-report.report.json ]; then
+            node -e "
+              const r = require('./lighthouse-report.report.json');
+              const c = r.categories;
+              console.log('=== Lighthouse Scores ===');
+              console.log('Performance:    ' + Math.round(c.performance.score * 100));
+              console.log('Accessibility:  ' + Math.round(c.accessibility.score * 100));
+              console.log('Best Practices: ' + Math.round(c[\"best-practices\"].score * 100));
+              console.log('SEO:            ' + Math.round(c.seo.score * 100));
+            "
+          fi
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: lighthouse-report
-          path: .lighthouseci/
+          path: ./lighthouse-report.report.html
           retention-days: 14
