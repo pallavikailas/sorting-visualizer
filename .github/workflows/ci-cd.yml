@@ -11,7 +11,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -50,13 +50,6 @@ jobs:
         run: npm install
       - name: Run tests
         run: npm test
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 7
 
   build:
     name: 🔨 Build
@@ -102,8 +95,15 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     timeout-minutes: 3
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Install Lighthouse
-        run: npm install -g lighthouse chrome-launcher
+        run: npm install -g lighthouse
+
       - name: Run Lighthouse
         run: |
           lighthouse https://pallavikailas.github.io/sorting-visualizer/ \
@@ -114,20 +114,51 @@ jobs:
             --only-categories=performance,accessibility,best-practices,seo \
             --quiet
         continue-on-error: true
-      - name: Print scores
-        if: always()
+
+      - name: Generate badge JSON
+        id: badge
         run: |
-          if [ -f ./lighthouse-report.report.json ]; then
-            node -e "
-              const r = require('./lighthouse-report.report.json');
-              const c = r.categories;
-              console.log('=== Lighthouse Scores ===');
-              console.log('Performance:    ' + Math.round(c.performance.score * 100));
-              console.log('Accessibility:  ' + Math.round(c.accessibility.score * 100));
-              console.log('Best Practices: ' + Math.round(c[\"best-practices\"].score * 100));
-              console.log('SEO:            ' + Math.round(c.seo.score * 100));
-            "
-          fi
+          node -e "
+            const fs = require('fs');
+            if (!fs.existsSync('./lighthouse-report.report.json')) {
+              fs.writeFileSync('./lighthouse-badge.json', JSON.stringify({schemaVersion:1,label:'lighthouse',message:'error',color:'red'}));
+              process.exit(0);
+            }
+            const r = JSON.parse(fs.readFileSync('./lighthouse-report.report.json'));
+            const c = r.categories;
+            const perf = Math.round(c.performance.score * 100);
+            const a11y = Math.round(c.accessibility.score * 100);
+            const bp   = Math.round(c['best-practices'].score * 100);
+            const seo  = Math.round(c.seo.score * 100);
+            const avg  = Math.round((perf + a11y + bp + seo) / 4);
+            console.log('Performance:    ' + perf);
+            console.log('Accessibility:  ' + a11y);
+            console.log('Best Practices: ' + bp);
+            console.log('SEO:            ' + seo);
+            console.log('Average:        ' + avg);
+            const color = avg >= 90 ? 'brightgreen' : avg >= 70 ? 'orange' : 'red';
+            const badge = {schemaVersion:1, label:'lighthouse', message:avg+'', color};
+            fs.writeFileSync('./lighthouse-badge.json', JSON.stringify(badge));
+            console.log('Badge: ' + JSON.stringify(badge));
+          "
+
+      - name: Push badge to badges branch
+        run: |
+          # Clone just the badges branch into a separate directory
+          git clone --branch badges --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/pallavikailas/sorting-visualizer.git badges-repo || \
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/pallavikailas/sorting-visualizer.git badges-repo && cd badges-repo && git checkout --orphan badges && git rm -rf . && cd ..
+          
+          # Copy badge file in
+          cp ./lighthouse-badge.json badges-repo/lighthouse-badge.json
+          
+          # Commit and push
+          cd badges-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lighthouse-badge.json
+          git diff --cached --quiet || git commit -m "chore: update lighthouse badge [skip ci]"
+          git push origin badges
+
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v4
         if: always()
@@ -136,18 +167,10 @@ jobs:
           path: ./lighthouse-report.report.html
           retention-days: 14
 
-      - name: Write score badge
-        if: always()
-        run: |
-          node -e "
-            const r = require('./lighthouse-report.report.json');
-            const score = Math.round(r.categories.performance.score * 100);
-            const color = score >= 90 ? 'brightgreen' : score >= 70 ? 'orange' : 'red';
-            const badge = { schemaVersion: 1, label: 'lighthouse', message: score + '', color };
-            require('fs').writeFileSync('lighthouse-badge.json', JSON.stringify(badge));
-          "
       - name: Upload badge JSON
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: lighthouse-badge
-          path: lighthouse-badge.json
+          path: ./lighthouse-badge.json
+          retention-days: 14
