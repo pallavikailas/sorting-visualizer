@@ -7,7 +7,6 @@ An interactive, step-by-step sorting algorithm visualizer. Watch algorithms work
 
 **🚀 [Live Demo →](https://pallavikailas.github.io/sorting-visualizer)**
 
----
 <!-- LIGHTHOUSE_START -->
 ## 🏠 Lighthouse Scores
 > Last updated: Fri, 20 Mar 2026 18:33:11 GMT
