@@ -4,6 +4,16 @@
 [![Deploy to Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-blue?logo=github)](https://pallavikailas.github.io/sorting-visualizer)
 
 <!-- LIGHTHOUSE_START -->
+## 🏠 Lighthouse Scores
+> Last updated: Fri, 20 Mar 2026 18:33:11 GMT
+
+| Category | Score |
+|---|---|
+| Performance | 🟡 88 |
+| Accessibility | 🟡 81 |
+| Best Practices | 🟢 96 |
+| SEO | 🟢 90 |
+| **Average** | **🟡 89** |
 <!-- LIGHTHOUSE_END -->
 
 An interactive, step-by-step sorting algorithm visualizer. Watch algorithms work in real time, compare time complexities, and explore Big-O growth curves — all in the browser with zero dependencies.
