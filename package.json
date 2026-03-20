@@ -31,6 +31,6 @@
     "collectCoverage": true,
     "coverageDirectory": "coverage",
     "coverageReporters": ["text", "lcov", "html"]
-  }
+  },
   "test": "jest"
 }
