@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SortViz — Sorting Algorithm Visualizer</title>
+  <link rel="stylesheet" href="src/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="scanline"></div>
+
+  <header>
+    <div class="logo">
+      <span class="logo-bracket">[</span>
+      SORT<span class="logo-accent">VIZ</span>
+      <span class="logo-bracket">]</span>
+    </div>
+    <p class="tagline">Sorting Algorithms — Visualised & Demystified</p>
+  </header>
+
+  <main>
+    <!-- Algorithm Selector -->
+    <section class="algo-selector">
+      <div class="algo-tabs" id="algoTabs">
+        <button class="tab active" data-algo="bubble">Bubble</button>
+        <button class="tab" data-algo="selection">Selection</button>
+        <button class="tab" data-algo="insertion">Insertion</button>
+        <button class="tab" data-algo="merge">Merge</button>
+        <button class="tab" data-algo="quick">Quick</button>
+        <button class="tab" data-algo="heap">Heap</button>
+        <button class="tab" data-algo="shell">Shell</button>
+        <button class="tab" data-algo="counting">Counting</button>
+      </div>
+    </section>
+
+    <!-- Info Panel -->
+    <section class="info-panel" id="infoPanel">
+      <div class="info-left">
+        <h2 class="algo-name" id="algoName">Bubble Sort</h2>
+        <p class="algo-desc" id="algoDesc">Repeatedly swaps adjacent elements that are in the wrong order. Simple but inefficient for large datasets.</p>
+        <div class="complexity-grid">
+          <div class="complexity-card">
+            <span class="complexity-label">Best</span>
+            <span class="complexity-value" id="bestCase">O(n)</span>
+          </div>
+          <div class="complexity-card worst">
+            <span class="complexity-label">Worst</span>
+            <span class="complexity-value" id="worstCase">O(n²)</span>
+          </div>
+          <div class="complexity-card avg">
+            <span class="complexity-label">Average</span>
+            <span class="complexity-value" id="avgCase">O(n²)</span>
+          </div>
+          <div class="complexity-card space">
+            <span class="complexity-label">Space</span>
+            <span class="complexity-value" id="spaceCase">O(1)</span>
+          </div>
+        </div>
+        <div class="algo-tags" id="algoTags">
+          <span class="tag">Stable</span>
+          <span class="tag">In-Place</span>
+          <span class="tag">Comparison</span>
+        </div>
+      </div>
+      <div class="info-right">
+        <div class="pseudocode-box">
+          <div class="pseudocode-header">
+            <span>Pseudocode</span>
+            <span class="lang-badge">Algorithm</span>
+          </div>
+          <pre class="pseudocode" id="pseudocode"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls -->
+    <section class="controls">
+      <div class="control-group">
+        <label>Array Size: <span id="sizeLabel">40</span></label>
+        <input type="range" id="sizeSlider" min="10" max="100" value="40" />
+      </div>
+      <div class="control-group">
+        <label>Speed: <span id="speedLabel">Medium</span></label>
+        <input type="range" id="speedSlider" min="1" max="5" value="3" />
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-generate" id="generateBtn">⟳ New Array</button>
+        <button class="btn btn-sort" id="sortBtn">▶ Sort</button>
+        <button class="btn btn-stop" id="stopBtn" disabled>■ Stop</button>
+      </div>
+      <div class="stats">
+        <span>Comparisons: <strong id="comparisons">0</strong></span>
+        <span>Swaps: <strong id="swaps">0</strong></span>
+        <span>Time: <strong id="elapsed">0ms</strong></span>
+      </div>
+    </section>
+
+    <!-- Visualizer -->
+    <section class="visualizer">
+      <div class="bar-container" id="barContainer"></div>
+      <div class="step-info" id="stepInfo">Press Sort to begin</div>
+    </section>
+
+    <!-- Complexity Comparison Chart -->
+    <section class="comparison-section">
+      <h3 class="section-title">// Complexity Comparison</h3>
+      <div class="comparison-table-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Best</th>
+              <th>Average</th>
+              <th>Worst</th>
+              <th>Space</th>
+              <th>Stable</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Big-O Chart -->
+    <section class="bigO-section">
+      <h3 class="section-title">// Big-O Growth Curves</h3>
+      <canvas id="bigOChart" width="800" height="300"></canvas>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built with vanilla JS · Open Source on GitHub · MIT License</p>
+    <p class="footer-sub">CI/CD via GitHub Actions · Deployed on GitHub Pages</p>
+  </footer>
+
+  <script src="src/algorithms.js"></script>
+  <script src="src/visualizer.js"></script>
+  <script src="src/bigochart.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
