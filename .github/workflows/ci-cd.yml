@@ -135,3 +135,19 @@ jobs:
           name: lighthouse-report
           path: ./lighthouse-report.report.html
           retention-days: 14
+
+      - name: Write score badge
+        if: always()
+        run: |
+          node -e "
+            const r = require('./lighthouse-report.report.json');
+            const score = Math.round(r.categories.performance.score * 100);
+            const color = score >= 90 ? 'brightgreen' : score >= 70 ? 'orange' : 'red';
+            const badge = { schemaVersion: 1, label: 'lighthouse', message: score + '', color };
+            require('fs').writeFileSync('lighthouse-badge.json', JSON.stringify(badge));
+          "
+      - name: Upload badge JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-badge
+          path: lighthouse-badge.json
