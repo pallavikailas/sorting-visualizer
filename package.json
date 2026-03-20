@@ -28,8 +28,9 @@
   "jest": {
     "testEnvironment": "node",
     "testMatch": ["**/tests/**/*.test.js"],
-    "collectCoverageFrom": ["src/algorithms.js"],
-    "coverageReporters": ["text", "lcov", "html"],
-    "coverageDirectory": "test-results/coverage"
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"]
   }
+  "test": "jest"
 }
