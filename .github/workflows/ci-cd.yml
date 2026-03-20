@@ -42,7 +42,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Lint HTML
         run: npm run lint:html
@@ -83,7 +83,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run algorithm correctness tests
         run: npm test
@@ -145,7 +145,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build production bundle
         run: npm run build
@@ -201,7 +201,7 @@ jobs:
     steps:
       - name: Check site is live
         run: |
-          URL="${{ needs.deploy.outputs.page_url || 'https://YOUR_USERNAME.github.io/sorting-visualizer' }}"
+          URL="${{ needs.deploy.outputs.page_url || 'https://pallavikailas.github.io/sorting-visualizer' }}"
           echo "Testing: $URL"
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
           if [ "$STATUS" -eq 200 ]; then
