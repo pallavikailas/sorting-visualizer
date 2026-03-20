@@ -1,14 +1,14 @@
 # 🔢 SortViz — Sorting Algorithm Visualizer
 
-[![CI/CD Pipeline](https://github.com/YOUR_USERNAME/sorting-visualizer/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/YOUR_USERNAME/sorting-visualizer/actions/workflows/ci-cd.yml)
-[![Deploy to Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-blue?logo=github)](https://YOUR_USERNAME.github.io/sorting-visualizer)
+[![CI/CD Pipeline](https://github.com/pallavikailas/sorting-visualizer/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/pallavikailas/sorting-visualizer/actions/workflows/ci-cd.yml)
+[![Deploy to Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-blue?logo=github)](https://pallavikailas.github.io/sorting-visualizer)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](#)
 [![Lighthouse](https://img.shields.io/badge/lighthouse-90%2B-orange?logo=lighthouse)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An interactive, step-by-step sorting algorithm visualizer. Watch algorithms work in real time, compare time complexities, and explore Big-O growth curves — all in the browser with zero dependencies.
 
-**🚀 [Live Demo →](https://YOUR_USERNAME.github.io/sorting-visualizer)**
+**🚀 [Live Demo →](https://pallavikailas.github.io/sorting-visualizer)**
 
 ---
 
@@ -219,24 +219,3 @@ Each sorting algorithm is implemented as a JavaScript **generator function** (`f
 The visualizer consumes these steps in an async loop with a configurable delay, updating bar heights and colours on each frame.
 
 ---
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/radix-sort`
-3. Add the algorithm to `src/algorithms.js` following the generator pattern
-4. Add tests to `tests/algorithms.test.js`
-5. Open a PR — the pipeline will validate everything automatically
-
-PR titles must follow [Conventional Commits](https://www.conventionalcommits.org/):
-`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
-
----
-
-## 📄 License
-
-MIT — see [LICENSE](LICENSE) for details.
-
----
-
-<p align="center">Built with ❤️ and vanilla JavaScript · Zero dependencies · Open Source</p>
