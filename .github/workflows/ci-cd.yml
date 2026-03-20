@@ -128,7 +128,7 @@ jobs:
             --assert.assertions.categories:accessibility=warn \
             --assert.assertions.categories:best-practices=warn \
             --assert.assertions.categories:seo=warn \
-            --upload.target=temporary-public-storage \
+            --upload.target=filesystem \
             || true
         continue-on-error: true
       - name: Upload Lighthouse report
