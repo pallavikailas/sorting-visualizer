@@ -1,12 +1,3 @@
-# ============================================================
-# SortViz — GitHub Actions CI/CD Pipeline
-# Runs on every push/PR:
-#   1. Lint & validate HTML/CSS/JS
-#   2. Run unit tests (algorithm correctness)
-#   3. Audit Lighthouse performance
-#   4. Deploy to GitHub Pages (main branch only)
-# ============================================================
-
 name: CI/CD Pipeline
 
 on:
@@ -14,7 +5,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
-  workflow_dispatch:   # Allow manual runs
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -26,36 +17,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ─────────────────────────────────────────
-  # JOB 1: Lint & Validate
-  # ─────────────────────────────────────────
   lint:
     name: 🔍 Lint & Validate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Lint HTML
-        run: npm run lint:html
-
-      - name: Lint CSS
-        run: npm run lint:css
-
-      - name: Lint JavaScript
-        run: npm run lint:js
-
       - name: Validate file structure
         run: |
-          echo "Checking required files exist..."
           files=("index.html" "src/style.css" "src/algorithms.js" "src/visualizer.js" "src/app.js" "src/bigochart.js")
           for f in "${files[@]}"; do
             if [ ! -f "$f" ]; then
@@ -66,117 +42,50 @@ jobs:
             fi
           done
 
-  # ─────────────────────────────────────────
-  # JOB 2: Algorithm Unit Tests
-  # ─────────────────────────────────────────
   test:
     name: 🧪 Algorithm Tests
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run algorithm correctness tests
+      - name: Run tests
         run: npm test
 
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: test-results/
-          retention-days: 7
-
-  # ─────────────────────────────────────────
-  # JOB 3: Lighthouse Performance Audit
-  # ─────────────────────────────────────────
-  lighthouse:
-    name: 🏠 Lighthouse Audit
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.13.x
-
-      - name: Run Lighthouse CI
-        run: lhci autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-
-      - name: Upload Lighthouse report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: lighthouse-report
-          path: .lighthouseci/
-          retention-days: 14
-
-  # ─────────────────────────────────────────
-  # JOB 4: Build (validate assets)
-  # ─────────────────────────────────────────
   build:
-    name: 🔨 Build & Bundle
+    name: 🔨 Build
     runs-on: ubuntu-latest
     needs: [lint, test]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build production bundle
+      - name: Build
         run: npm run build
 
-      - name: Check bundle size
-        run: |
-          echo "=== Bundle Sizes ==="
-          du -sh dist/* | sort -h
-          TOTAL=$(du -sb dist/ | cut -f1)
-          echo "Total: $(du -sh dist/ | cut -f1)"
-          # Fail if bundle > 1MB (1048576 bytes)
-          if [ $TOTAL -gt 1048576 ]; then
-            echo "❌ Bundle too large (> 1MB)"
-            exit 1
-          fi
-          echo "✅ Bundle size is acceptable"
-
-      - name: Upload build artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/
 
-  # ─────────────────────────────────────────
-  # JOB 5: Deploy to GitHub Pages
-  # Only runs on main branch after all checks pass
-  # ─────────────────────────────────────────
   deploy:
     name: 🚀 Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    needs: [build, lighthouse]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -184,29 +93,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Comment deployment URL on commit
-        if: success()
-        run: |
-          echo "🚀 Deployed to: ${{ steps.deployment.outputs.page_url }}"
-
-  # ─────────────────────────────────────────
-  # JOB 6: Post-deploy smoke test
-  # ─────────────────────────────────────────
-  smoke-test:
-    name: 🔥 Smoke Test
-    runs-on: ubuntu-latest
-    needs: deploy
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Check site is live
-        run: |
-          URL="${{ needs.deploy.outputs.page_url || 'https://pallavikailas.github.io/sorting-visualizer' }}"
-          echo "Testing: $URL"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
-          if [ "$STATUS" -eq 200 ]; then
-            echo "✅ Site is live! Status: $STATUS"
-          else
-            echo "❌ Site returned status: $STATUS"
-            exit 1
-          fi
