@@ -3,6 +3,9 @@
 [![CI/CD Pipeline](https://github.com/pallavikailas/sorting-visualizer/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/pallavikailas/sorting-visualizer/actions/workflows/ci-cd.yml)
 [![Deploy to Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-blue?logo=github)](https://pallavikailas.github.io/sorting-visualizer)
 
+<!-- LIGHTHOUSE_START -->
+<!-- LIGHTHOUSE_END -->
+
 An interactive, step-by-step sorting algorithm visualizer. Watch algorithms work in real time, compare time complexities, and explore Big-O growth curves — all in the browser with zero dependencies.
 
 **🚀 [Live Demo →](https://pallavikailas.github.io/sorting-visualizer)**
