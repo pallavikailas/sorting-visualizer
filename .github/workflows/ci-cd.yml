@@ -11,7 +11,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -95,6 +95,10 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     timeout-minutes: 3
     steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -113,13 +117,13 @@ jobs:
             --quiet
         continue-on-error: true
 
-      - name: Print scores to summary
+      - name: Update README with scores
         if: always()
         run: |
           node -e "
             const fs = require('fs');
             if (!fs.existsSync('./lighthouse-report.report.json')) {
-              console.log('No report generated');
+              console.log('No report found, skipping');
               process.exit(0);
             }
             const r = JSON.parse(fs.readFileSync('./lighthouse-report.report.json'));
@@ -129,24 +133,66 @@ jobs:
             const bp   = Math.round(c['best-practices'].score * 100);
             const seo  = Math.round(c.seo.score * 100);
             const avg  = Math.round((perf + a11y + bp + seo) / 4);
-            const score = (s) => s >= 90 ? '🟢 ' + s : s >= 70 ? '🟡 ' + s : '🔴 ' + s;
-            const summary = [
+
+            // Write scores as JSON for shields.io badges
+            const scores = { perf, a11y, bp, seo, avg, updatedAt: new Date().toISOString() };
+            fs.writeFileSync('./lighthouse-scores.json', JSON.stringify(scores, null, 2));
+
+            // Build the new scores section
+            const emoji = (s) => s >= 90 ? '🟢' : s >= 70 ? '🟡' : '🔴';
+            const section = [
+              '<!-- LIGHTHOUSE_START -->',
               '## 🏠 Lighthouse Scores',
+              '> Last updated: ' + new Date().toUTCString(),
+              '',
               '| Category | Score |',
               '|---|---|',
-              '| Performance | ' + score(perf) + ' |',
-              '| Accessibility | ' + score(a11y) + ' |',
-              '| Best Practices | ' + score(bp) + ' |',
-              '| SEO | ' + score(seo) + ' |',
-              '| **Average** | **' + score(avg) + '** |',
+              '| Performance | ' + emoji(perf) + ' ' + perf + ' |',
+              '| Accessibility | ' + emoji(a11y) + ' ' + a11y + ' |',
+              '| Best Practices | ' + emoji(bp) + ' ' + bp + ' |',
+              '| SEO | ' + emoji(seo) + ' ' + seo + ' |',
+              '| **Average** | **' + emoji(avg) + ' ' + avg + '** |',
+              '<!-- LIGHTHOUSE_END -->',
             ].join('\n');
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + '\n');
+
+            // Replace section in README between markers
+            let readme = fs.readFileSync('./README.md', 'utf8');
+            if (readme.includes('<!-- LIGHTHOUSE_START -->')) {
+              readme = readme.replace(/<!-- LIGHTHOUSE_START -->[\s\S]*?<!-- LIGHTHOUSE_END -->/, section);
+            } else {
+              readme = readme + '\n\n' + section;
+            }
+            fs.writeFileSync('./README.md', readme);
+
+            // Print to log too
             console.log('Performance:    ' + perf);
             console.log('Accessibility:  ' + a11y);
             console.log('Best Practices: ' + bp);
             console.log('SEO:            ' + seo);
             console.log('Average:        ' + avg);
+
+            // Write step summary
+            const summary = [
+              '## 🏠 Lighthouse Scores',
+              '| Category | Score |',
+              '|---|---|',
+              '| Performance | ' + emoji(perf) + ' ' + perf + ' |',
+              '| Accessibility | ' + emoji(a11y) + ' ' + a11y + ' |',
+              '| Best Practices | ' + emoji(bp) + ' ' + bp + ' |',
+              '| SEO | ' + emoji(seo) + ' ' + seo + ' |',
+              '| **Average** | **' + emoji(avg) + ' ' + avg + '** |',
+            ].join('\n');
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + '\n');
           "
+
+      - name: Commit scores to main
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md lighthouse-scores.json
+          git diff --cached --quiet || git commit -m "chore: update lighthouse scores [skip ci]"
+          git push origin main
 
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v4
