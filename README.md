@@ -9,11 +9,11 @@ An interactive, step-by-step sorting algorithm visualizer. Watch algorithms work
 
 <!-- LIGHTHOUSE_START -->
 ## 🏠 Lighthouse Scores
-> Last updated: Sat, 21 Mar 2026 05:34:20 GMT
+> Last updated: Wed, 27 May 2026 07:27:41 GMT
 
 | Category | Score |
 |---|---|
-| Performance | 🟡 88 |
+| Performance | 🟡 89 |
 | Accessibility | 🟡 81 |
 | Best Practices | 🟢 96 |
 | SEO | 🟢 90 |
