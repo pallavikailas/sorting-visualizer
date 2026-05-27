@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+dist
+coverage
+*.md
+lighthouserc.js
+lighthouse-scores.json
+lighthouse-report*
+k8s

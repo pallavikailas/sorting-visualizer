@@ -1,0 +1,20 @@
+apiVersion: v2
+name: sorting-visualizer
+description: |
+  Helm chart for the SortViz — interactive sorting algorithm visualizer.
+  Deploys a single-page app served by nginx behind a Kubernetes Deployment,
+  Service and optional Ingress.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - sorting
+  - algorithms
+  - visualizer
+  - education
+home: https://github.com/pallavikailas/sorting-visualizer
+sources:
+  - https://github.com/pallavikailas/sorting-visualizer
+maintainers:
+  - name: pallavikailas
+    email: kailaspallavi464@gmail.com

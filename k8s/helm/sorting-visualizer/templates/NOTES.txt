@@ -1,0 +1,43 @@
+🎉 SortViz has been deployed!
+
+Release:   {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Version:   {{ .Chart.AppVersion }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Access the app
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{- if .Values.ingress.enabled }}
+  Ingress is enabled. Add the following to /etc/hosts:
+  {{- range .Values.ingress.hosts }}
+    127.0.0.1   {{ .host }}
+  {{- end }}
+
+  Then open: http://{{ (index .Values.ingress.hosts 0).host }}
+
+{{- else }}
+  Use kubectl port-forward to access locally:
+
+    kubectl port-forward svc/{{ include "sorting-visualizer.fullname" . }} 8080:80 \
+      --namespace {{ .Release.Namespace }}
+
+  Then open: http://localhost:8080
+
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Useful commands
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # Watch rollout
+  kubectl rollout status deployment/{{ include "sorting-visualizer.fullname" . }} -n {{ .Release.Namespace }}
+
+  # Scale replicas
+  kubectl scale deployment {{ include "sorting-visualizer.fullname" . }} --replicas=3 -n {{ .Release.Namespace }}
+
+  # Upgrade release
+  helm upgrade {{ .Release.Name }} ./k8s/helm/sorting-visualizer -n {{ .Release.Namespace }}
+
+  # Uninstall
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}

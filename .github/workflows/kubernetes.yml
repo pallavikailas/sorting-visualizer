@@ -1,0 +1,217 @@
+name: Kubernetes CI
+
+on:
+  # Called directly by ci-cd.yml after every successful build
+  workflow_call:
+    inputs:
+      image-tag:
+        description: "Docker image tag to deploy (e.g. sha-abc1234)"
+        required: false
+        type: string
+        default: "1.0.0"
+
+  # Also runnable standalone (on any k8s/Docker change, or manually)
+  push:
+    branches: [main, develop]
+    paths:
+      - 'k8s/**'
+      - 'Dockerfile'
+      - 'nginx.conf'
+      - '.github/workflows/kubernetes.yml'
+      - 'src/**'
+      - 'index.html'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  APP_VERSION: "1.0.0"
+
+permissions:
+  contents: read
+  packages: write   # push to GHCR
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  helm-lint:
+    name: 🔍 Helm Lint & Template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '4.2.0'
+
+      - name: Helm lint
+        run: helm lint k8s/helm/sorting-visualizer/
+
+      - name: Helm template (dry-run render)
+        run: |
+          helm template sortviz k8s/helm/sorting-visualizer/ \
+            --set image.pullPolicy=IfNotPresent \
+            | tee /tmp/rendered-manifests.yaml
+
+      - name: Upload rendered manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-rendered-manifests
+          path: /tmp/rendered-manifests.yaml
+          retention-days: 7
+
+  # ────────────────────────────────────────────────────────────────────────────
+  validate-manifests:
+    name: ✅ Validate Raw Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Validate k8s/manifests
+        run: |
+          kubeconform \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.32.0 \
+            k8s/manifests/namespace.yaml \
+            k8s/manifests/serviceaccount.yaml \
+            k8s/manifests/deployment.yaml \
+            k8s/manifests/service.yaml \
+            k8s/manifests/hpa.yaml
+
+      - name: Validate Helm-rendered manifests
+        run: |
+          helm template sortviz k8s/helm/sorting-visualizer/ \
+            --set image.pullPolicy=IfNotPresent \
+            | kubeconform \
+                -strict \
+                -ignore-missing-schemas \
+                -kubernetes-version 1.32.0 \
+                -
+
+  # ────────────────────────────────────────────────────────────────────────────
+  docker-build:
+    name: 🐳 Docker Build & Push (GHCR)
+    runs-on: ubuntu-latest
+    needs: [helm-lint, validate-manifests]
+    outputs:
+      image-digest: ${{ steps.push.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js (for build step)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install deps & build dist
+        run: npm install && npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}},value=v${{ env.APP_VERSION }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & push image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # ────────────────────────────────────────────────────────────────────────────
+  kind-e2e:
+    name: 🧪 kind E2E Deploy Test
+    runs-on: ubuntu-latest
+    needs: [helm-lint, validate-manifests]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Build dist
+        run: npm install && npm run build
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '4.2.0'
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          config: k8s/kind-config.yaml
+          cluster_name: sortviz-ci
+
+      - name: Build & load image into kind
+        run: |
+          docker build -t sorting-visualizer:1.0.0 .
+          kind load docker-image sorting-visualizer:1.0.0 --name sortviz-ci
+
+      - name: Create namespace
+        run: kubectl create namespace sorting-visualizer
+
+      - name: Deploy with Helm
+        run: |
+          helm install sortviz k8s/helm/sorting-visualizer/ \
+            --namespace sorting-visualizer \
+            --set image.repository=sorting-visualizer \
+            --set image.tag=1.0.0 \
+            --set image.pullPolicy=Never \
+            --wait \
+            --timeout 2m
+
+      - name: Verify pods are Running
+        run: |
+          kubectl rollout status deployment/sortviz-sorting-visualizer \
+            --namespace sorting-visualizer \
+            --timeout=90s
+          kubectl get pods -n sorting-visualizer
+
+      - name: Smoke test via port-forward
+        run: |
+          kubectl port-forward svc/sortviz-sorting-visualizer 8080:80 \
+            --namespace sorting-visualizer &
+          sleep 3
+          curl -sf http://localhost:8080/healthz | grep ok
+          curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/ | grep 200
+          echo "✅ Smoke test passed"
+
+      - name: Helm test (NOTES.txt sanity check)
+        run: |
+          helm get notes sortviz --namespace sorting-visualizer
+
+      - name: Cleanup
+        if: always()
+        run: kind delete cluster --name sortviz-ci 2>/dev/null || true

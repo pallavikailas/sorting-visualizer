@@ -1,0 +1,13 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: sortviz
+
+nodes:
+  - role: control-plane
+    # Port mapping so we can curl the app from the host
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+  - role: worker
+  - role: worker

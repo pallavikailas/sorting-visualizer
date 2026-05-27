@@ -1,0 +1,21 @@
+# NodePort service that binds to port 30080 on kind nodes,
+# which is mapped to localhost:8080 via kind-config.yaml.
+# Apply instead of service.yaml when you want direct host access without port-forward.
+apiVersion: v1
+kind: Service
+metadata:
+  name: sorting-visualizer-nodeport
+  namespace: sorting-visualizer
+  labels:
+    app.kubernetes.io/name: sorting-visualizer
+    app.kubernetes.io/component: frontend
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      nodePort: 30080
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: sorting-visualizer
